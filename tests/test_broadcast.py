@@ -7,7 +7,8 @@ import pytest
 from redis import asyncio as redis
 
 from broadcaster import Broadcast, BroadcastBackend, Event
-from broadcaster.backends.kafka import KafkaBackend
+
+# from broadcaster.backends.kafka import KafkaBackend
 from broadcaster.backends.redis import RedisBackend
 
 
@@ -112,7 +113,7 @@ async def test_postgres():
 
 # @pytest.mark.asyncio
 # async def test_kafka_multiple_urls():
-#     async with Broadcast(backend=KafkaBackend(urls=["kafka://localhost:9092", "kafka://localhost:9092"])) as broadcast:
+#     async with Broadcast(backend=KafkaBackend(urls=["kafka://localhost:9092", "kafka://localhost:9092"])) as broadcast:  # noqa: E501
 #         async with broadcast.subscribe("chatroom") as subscriber:
 #             await broadcast.publish("chatroom", "hello")
 #             event = await subscriber.get()
