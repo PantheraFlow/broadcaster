@@ -114,11 +114,12 @@ class Broadcast:
 
             yield Subscriber(queue)
         finally:
-            self._subscribers[channel].remove(queue)
-            if not self._subscribers.get(channel):
-                del self._subscribers[channel]
-                await self._backend.unsubscribe(channel)
-            await queue.put(None)
+            for channel in channels:
+                self._subscribers[channel].remove(queue)
+                if not self._subscribers.get(channel):
+                    del self._subscribers[channel]
+                    await self._backend.unsubscribe(channel)
+                await queue.put(None)
 
 
 class Subscriber:
