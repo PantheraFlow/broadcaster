@@ -114,7 +114,6 @@ state, make sure to strictly pin your requirements to `broadcaster==0.3.0`.
 
 To be more capable we'd really want to add some additional backends, provide API support for reading recent event history from persistent stores, and provide a serialization/deserialization API...
 
-* Serialization / deserialization to support broadcasting structured data.
 * A backend for RabbitMQ.
 * Add support for `subscribe('chatroom', history=100)` for backends which provide persistence. (Redis Streams, Apache Kafka) This will allow applications to subscribe to channel updates, while also being given an initial window onto the most recent events. We *might* also want to support some basic paging operations, to allow applications to scan back in the event history.
 * Support for pattern subscribes in backends that support it.
@@ -131,5 +130,7 @@ Integrates MQTT with Broadcaster
 ## Change Log
 
 ### Version 0.1
- * forked from [encode/brodcaster](https://github.com/encode/broadcaster)
- * fix: ensure backend subscription occurs when adding new subscribers. Previously, if two subscrptions has been made nearly concurrently, only one got events delivered.
+ * Forked from [encode/brodcaster](https://github.com/encode/broadcaster)
+ * Fix: ensure backend subscription occurs when adding new subscribers. Previously, if two subscrptions has been made nearly concurrently, only one got events delivered.
+ * Feature: allow subscribing to multiple channels
+ * Feature: Added serialization / deserialization to support broadcasting structured data.

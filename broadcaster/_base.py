@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Callable
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any, AsyncGenerator, AsyncIterator, cast
 from urllib.parse import urlparse
@@ -10,7 +11,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class Event:
-    def __init__(self, channel: str, message: str) -> None:
+    def __init__(self, channel: str, message: Any) -> None:
         self.channel = channel
         self.message = message
 
@@ -26,10 +27,19 @@ class Unsubscribed(Exception):
 
 
 class Broadcast:
-    def __init__(self, url: str | None = None, *, backend: BroadcastBackend | None = None) -> None:
+    def __init__(
+        self,
+        url: str | None = None,
+        *,
+        backend: BroadcastBackend | None = None,
+        encoder: Callable[[Any], Any] | None = None,
+        decoder: Callable[[Event], Any] | None = None,
+    ) -> None:
         assert url or backend, "Either `url` or `backend` must be provided."
         self._backend = backend or self._create_backend(cast(str, url))
         self._subscribers: dict[str, set[asyncio.Queue[Event | None]]] = {}
+        self.encoder = encoder
+        self.decoder = decoder
 
     def _create_backend(self, url: str) -> BroadcastBackend:
         parsed_url = urlparse(url)
@@ -80,22 +90,27 @@ class Broadcast:
     async def _listener(self) -> None:
         while True:
             event = await self._backend.next_published()
+            if self.decoder:
+                event = Event(channel=event.channel, message=self.decoder(event))
             for queue in list(self._subscribers.get(event.channel, [])):
                 await queue.put(event)
 
     async def publish(self, channel: str, message: Any) -> None:
+        if self.encoder:
+            message = self.encoder(message)
         await self._backend.publish(channel, message)
 
     @asynccontextmanager
-    async def subscribe(self, channel: str) -> AsyncIterator[Subscriber]:
+    async def subscribe(self, channel: str | list[str]) -> AsyncIterator[Subscriber]:
         queue: asyncio.Queue[Event | None] = asyncio.Queue()
-
+        channels = [channel] if isinstance(channel, str) else channel
         try:
-            if not self._subscribers.get(channel):
-                self._subscribers[channel] = {queue}
-                await self._backend.subscribe(channel)
-            else:
-                self._subscribers[channel].add(queue)
+            for channel in channels:
+                if not self._subscribers.get(channel):
+                    self._subscribers[channel] = {queue}
+                    await self._backend.subscribe(channel)
+                else:
+                    self._subscribers[channel].add(queue)
 
             yield Subscriber(queue)
         finally:
