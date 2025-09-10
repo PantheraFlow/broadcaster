@@ -3,15 +3,13 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "broadcaster"
+name = "panthera-broadcaster"
 dynamic = ["version"]
 description = "Simple broadcast channels."
 readme = "README.md"
 license = "BSD-3-Clause"
 requires-python = ">=3.8"
-authors = [
-    { name = "Tom Christie", email = "tom@tomchristie.com" },
-]
+authors = [{ name = "DanTolken" }]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Web Environment",
@@ -35,7 +33,7 @@ dependencies = [
 redis = ["redis"]
 postgres = ["asyncpg"]
 kafka = ["aiokafka"]
-test =  ["pytest", "pytest-asyncio"]
+test = ["pytest", "pytest-asyncio"]
 
 [project.urls]
 Homepage = "https://github.com/encode/broadcaster"
@@ -44,9 +42,10 @@ Homepage = "https://github.com/encode/broadcaster"
 path = "broadcaster/__init__.py"
 
 [tool.hatch.build.targets.sdist]
-include = [
-    "/broadcaster",
-]
+include = ["/broadcaster"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["broadcaster"]
 
 [tool.ruff]
 line-length = 120

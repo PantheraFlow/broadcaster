@@ -77,10 +77,10 @@ Python 3.8+
 
 ## Installation
 
-* `pip install broadcaster`
-* `pip install broadcaster[redis]`
-* `pip install broadcaster[postgres]`
-* `pip install broadcaster[kafka]`
+* `pip install panthera-broadcaster`
+* `pip install panthera-broadcaster[redis]`
+* `pip install panthera-broadcaster[postgres]`
+* `pip install panthera-broadcaster[kafka]`
 
 ## Available backends
 
