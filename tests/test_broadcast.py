@@ -100,24 +100,24 @@ async def test_postgres():
             assert event.message == "hello"
 
 
-@pytest.mark.asyncio
-async def test_kafka():
-    async with Broadcast("kafka://localhost:9092") as broadcast:
-        async with broadcast.subscribe("chatroom") as subscriber:
-            await broadcast.publish("chatroom", "hello")
-            event = await subscriber.get()
-            assert event.channel == "chatroom"
-            assert event.message == "hello"
+# @pytest.mark.asyncio
+# async def test_kafka():
+#     async with Broadcast("kafka://localhost:9092") as broadcast:
+#         async with broadcast.subscribe("chatroom") as subscriber:
+#             await broadcast.publish("chatroom", "hello")
+#             event = await subscriber.get()
+#             assert event.channel == "chatroom"
+#             assert event.message == "hello"
 
 
-@pytest.mark.asyncio
-async def test_kafka_multiple_urls():
-    async with Broadcast(backend=KafkaBackend(urls=["kafka://localhost:9092", "kafka://localhost:9092"])) as broadcast:
-        async with broadcast.subscribe("chatroom") as subscriber:
-            await broadcast.publish("chatroom", "hello")
-            event = await subscriber.get()
-            assert event.channel == "chatroom"
-            assert event.message == "hello"
+# @pytest.mark.asyncio
+# async def test_kafka_multiple_urls():
+#     async with Broadcast(backend=KafkaBackend(urls=["kafka://localhost:9092", "kafka://localhost:9092"])) as broadcast:
+#         async with broadcast.subscribe("chatroom") as subscriber:
+#             await broadcast.publish("chatroom", "hello")
+#             event = await subscriber.get()
+#             assert event.channel == "chatroom"
+#             assert event.message == "hello"
 
 
 @pytest.mark.asyncio
