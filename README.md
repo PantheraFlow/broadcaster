@@ -1,5 +1,8 @@
 # Broadcaster
 
+> **Note:** This is a fork from [encode/brodcaster](https://github.com/encode/broadcaster) as it seems not be maintained anymore. See the [Changelog](#change-log) for improvements made.
+
+
 Broadcaster helps you develop realtime streaming functionality by providing
 a simple broadcast API onto a number of different backend services.
 
@@ -122,3 +125,11 @@ To be more capable we'd really want to add some additional backends, provide API
 [Gist](https://gist.github.com/alex-oleshkevich/68411a0e7ad24d53afd28c3fa5da468c)
 
 Integrates MQTT with Broadcaster
+
+
+
+## Change Log
+
+### Version 0.1
+ * forked from [encode/brodcaster](https://github.com/encode/broadcaster)
+ * fix: ensure backend subscription occurs when adding new subscribers. Previously, if two subscrptions has been made nearly concurrently, only one got events delivered.
