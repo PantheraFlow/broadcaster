@@ -131,16 +131,18 @@ class Broadcast:
                 await queue.put(None)
 
 
-class Subscriber:
+class Subscriber(AsyncIterator[Event]):
     def __init__(self, queue: asyncio.Queue[Event | None]) -> None:
         self._queue = queue
 
-    async def __aiter__(self) -> AsyncIterator[Event]:
-        try:
-            while True:
-                yield await self.get()
-        except Unsubscribed:
-            pass
+    def __aiter__(self) -> AsyncIterator[Event]:
+        return self
+
+    async def __anext__(self) -> Event:
+        item = await self._queue.get()
+        if item is None:
+            raise StopAsyncIteration
+        return item
 
     async def get(self) -> Event:
         item = await self._queue.get()
