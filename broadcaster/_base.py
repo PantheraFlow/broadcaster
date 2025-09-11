@@ -16,7 +16,7 @@ class Event:
     def __init__(self, channel: str, message: str | bytes) -> None:
         self.channel = channel
         self.message = message
-        self.parsed_message: dict[Callable[[str | bytes], Any], Any] = {}
+        self._parsed_message: dict[Callable[[str | bytes], Any], Any] = {}
 
     def __eq__(self, other: object) -> bool:
         return isinstance(other, Event) and self.channel == other.channel and self.message == other.message
@@ -24,15 +24,15 @@ class Event:
     def __repr__(self) -> str:
         return f"Event(channel={self.channel!r}, message={self.message!r})"
 
-    def parsed(self, parser: Callable[[str | bytes], ReturnTypeT]) -> ReturnTypeT:
+    def parse_message(self, parser: Callable[[str | bytes], ReturnTypeT]) -> ReturnTypeT:
         """Parse the message with the given parser callable.
         Caches the result so that parsing is only done, usefull if many subsrcibers exist.
         """
-        if parser not in self.parsed_message:
+        if parser not in self._parsed_message:
             parsed_item = parser(self.message)
-            self.parsed_message[parser] = parsed_item
+            self._parsed_message[parser] = parsed_item
             return parsed_item
-        return self.parsed_message[parser]  # type: ignore[no-any-return]
+        return self._parsed_message[parser]  # type: ignore[no-any-return]
 
 
 class Unsubscribed(Exception):

@@ -153,6 +153,6 @@ async def test_only_parsed_once():
         async with broadcast.subscribe("chatroom") as subscriber1:
             async with broadcast.subscribe("chatroom") as subscriber2:
                 await broadcast.publish("chatroom", "hello")
-                assert (await subscriber1.get()).parsed(parser) == {"parsed": "hello"}
-                assert (await subscriber2.get()).parsed(parser) == {"parsed": "hello"}
+                assert (await subscriber1.get()).parse_message(parser) == {"parsed": "hello"}
+                assert (await subscriber2.get()).parse_message(parser) == {"parsed": "hello"}
     assert parser.call_count == 1
