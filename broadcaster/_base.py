@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Callable
+from collections.abc import AsyncIterator, Callable, Sequence
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, Any, AsyncGenerator, AsyncIterator, cast
+from typing import TYPE_CHECKING, Any, cast
 from urllib.parse import urlparse
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -101,7 +101,7 @@ class Broadcast:
         await self._backend.publish(channel, message)
 
     @asynccontextmanager
-    async def subscribe(self, channel: str | list[str]) -> AsyncIterator[Subscriber]:
+    async def subscribe(self, channel: str | Sequence[str]) -> AsyncIterator[Subscriber]:
         queue: asyncio.Queue[Event | None] = asyncio.Queue()
         channels = [channel] if isinstance(channel, str) else channel
         try:
@@ -126,7 +126,7 @@ class Subscriber:
     def __init__(self, queue: asyncio.Queue[Event | None]) -> None:
         self._queue = queue
 
-    async def __aiter__(self) -> AsyncGenerator[Event | None, None]:
+    async def __aiter__(self) -> AsyncIterator[Event]:
         try:
             while True:
                 yield await self.get()
