@@ -1,25 +1,38 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Callable
+from collections.abc import AsyncIterator, Callable, Sequence
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, Any, AsyncGenerator, AsyncIterator, cast
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 from urllib.parse import urlparse
 
 if TYPE_CHECKING:  # pragma: no cover
     from broadcaster.backends.base import BroadcastBackend
 
+ReturnTypeT = TypeVar("ReturnTypeT")
+
 
 class Event:
-    def __init__(self, channel: str, message: Any) -> None:
+    def __init__(self, channel: str, message: str | bytes) -> None:
         self.channel = channel
         self.message = message
+        self.parsed_message: dict[Callable[[str | bytes], Any], Any] = {}
 
     def __eq__(self, other: object) -> bool:
         return isinstance(other, Event) and self.channel == other.channel and self.message == other.message
 
     def __repr__(self) -> str:
         return f"Event(channel={self.channel!r}, message={self.message!r})"
+
+    def parsed(self, parser: Callable[[str | bytes], ReturnTypeT]) -> ReturnTypeT:
+        """Parse the message with the given parser callable.
+        Caches the result so that parsing is only done, usefull if many subsrcibers exist.
+        """
+        if parser not in self.parsed_message:
+            parsed_item = parser(self.message)
+            self.parsed_message[parser] = parsed_item
+            return parsed_item
+        return self.parsed_message[parser]  # type: ignore[no-any-return]
 
 
 class Unsubscribed(Exception):
@@ -32,14 +45,12 @@ class Broadcast:
         url: str | None = None,
         *,
         backend: BroadcastBackend | None = None,
-        encoder: Callable[[Any], Any] | None = None,
-        decoder: Callable[[Event], Any] | None = None,
+        serializer: Callable[[Any], bytes | str] | None = None,
     ) -> None:
         assert url or backend, "Either `url` or `backend` must be provided."
         self._backend = backend or self._create_backend(cast(str, url))
         self._subscribers: dict[str, set[asyncio.Queue[Event | None]]] = {}
-        self.encoder = encoder
-        self.decoder = decoder
+        self.serializer = serializer
 
     def _create_backend(self, url: str) -> BroadcastBackend:
         parsed_url = urlparse(url)
@@ -90,18 +101,16 @@ class Broadcast:
     async def _listener(self) -> None:
         while True:
             event = await self._backend.next_published()
-            if self.decoder:
-                event = Event(channel=event.channel, message=self.decoder(event))
             for queue in list(self._subscribers.get(event.channel, [])):
                 await queue.put(event)
 
     async def publish(self, channel: str, message: Any) -> None:
-        if self.encoder:
-            message = self.encoder(message)
+        if self.serializer:
+            message = self.serializer(message)
         await self._backend.publish(channel, message)
 
     @asynccontextmanager
-    async def subscribe(self, channel: str | list[str]) -> AsyncIterator[Subscriber]:
+    async def subscribe(self, channel: str | Sequence[str]) -> AsyncIterator[Subscriber]:
         queue: asyncio.Queue[Event | None] = asyncio.Queue()
         channels = [channel] if isinstance(channel, str) else channel
         try:
@@ -126,7 +135,7 @@ class Subscriber:
     def __init__(self, queue: asyncio.Queue[Event | None]) -> None:
         self._queue = queue
 
-    async def __aiter__(self) -> AsyncGenerator[Event | None, None]:
+    async def __aiter__(self) -> AsyncIterator[Event]:
         try:
             while True:
                 yield await self.get()
