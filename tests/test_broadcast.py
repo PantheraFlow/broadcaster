@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import typing
+from unittest.mock import MagicMock
 
 import pytest
 from redis import asyncio as redis
@@ -143,3 +144,15 @@ async def test_unknown_backend():
 async def test_needs_url_or_backend():
     with pytest.raises(AssertionError, match="Either `url` or `backend` must be provided."):
         Broadcast()
+
+
+@pytest.mark.asyncio
+async def test_only_parsed_once():
+    parser = MagicMock(side_effect=lambda x: {"parsed": x})
+    async with Broadcast("memory://") as broadcast:
+        async with broadcast.subscribe("chatroom") as subscriber1:
+            async with broadcast.subscribe("chatroom") as subscriber2:
+                await broadcast.publish("chatroom", "hello")
+                assert (await subscriber1.get()).parsed(parser) == {"parsed": "hello"}
+                assert (await subscriber2.get()).parsed(parser) == {"parsed": "hello"}
+    assert parser.call_count == 1

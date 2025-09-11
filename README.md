@@ -134,3 +134,7 @@ Integrates MQTT with Broadcaster
  * Fix: ensure backend subscription occurs when adding new subscribers. Previously, if two subscrptions has been made nearly concurrently, only one got events delivered.
  * Feature: allow subscribing to multiple channels
  * Feature: Added serialization / deserialization to support broadcasting structured data.
+
+### Version 0.5
+* Renamed encoder to serializer
+* Removed decoder and added therefore cached parser function to Event
