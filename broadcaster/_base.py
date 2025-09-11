@@ -32,14 +32,14 @@ class Broadcast:
         url: str | None = None,
         *,
         backend: BroadcastBackend | None = None,
-        encoder: Callable[[Any], Any] | None = None,
-        decoder: Callable[[Event], Any] | None = None,
+        serializer: Callable[[Any], bytes] | None = None,
+        deserializer: Callable[[Event], Any] | None = None,
     ) -> None:
         assert url or backend, "Either `url` or `backend` must be provided."
         self._backend = backend or self._create_backend(cast(str, url))
         self._subscribers: dict[str, set[asyncio.Queue[Event | None]]] = {}
-        self.encoder = encoder
-        self.decoder = decoder
+        self.serializer = serializer
+        self.deserializer = deserializer
 
     def _create_backend(self, url: str) -> BroadcastBackend:
         parsed_url = urlparse(url)
@@ -90,14 +90,14 @@ class Broadcast:
     async def _listener(self) -> None:
         while True:
             event = await self._backend.next_published()
-            if self.decoder:
-                event = Event(channel=event.channel, message=self.decoder(event))
+            if self.deserializer:
+                event = Event(channel=event.channel, message=self.deserializer(event))
             for queue in list(self._subscribers.get(event.channel, [])):
                 await queue.put(event)
 
     async def publish(self, channel: str, message: Any) -> None:
-        if self.encoder:
-            message = self.encoder(message)
+        if self.serializer:
+            message = self.serializer(message)
         await self._backend.publish(channel, message)
 
     @asynccontextmanager
